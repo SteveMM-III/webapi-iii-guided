@@ -10,21 +10,32 @@ function logger(req, res, next) {
   next();
 }
 
-function gatekeeper( req, res ) {
+function gatekeeper( req, res, next ) {
   const pass = req.headers.password;
   
-  if ( pass === 'melon' ) {
+  if ( pass && pass === 'melon' ) {
     next();
   } else {
     res.status( 401 ).json( { message: 'bad password' } );
   }
 }
 
+const checkRole = role => {
+  return function( req, res, next ) {
+    if ( role && role === req.headers.role ) {
+      next()
+    } else {
+      res.status( 403 ).json( { message: "can't touch this" } );
+    }
+  };
+
+}
+
 server.use(helmet());
 server.use(express.json());
 server.use( logger );
 
-server.use('/api/hubs', helmet(), hubsRouter);
+server.use('/api/hubs', checkRole('admin'), hubsRouter);
 
 server.get('/', (req, res) => {
   const nameInsert = (req.name) ? ` ${req.name}` : '';
@@ -39,7 +50,7 @@ server.get( '/echo', (req, res) => {
   res.send(req.headers);
 })
 
-server.get( '/area51', helmet(), gatekeeper(), (req, res) => {
+server.get( '/area51', gatekeeper, checkRole( 'agent' ),(req, res) => {
   res.send(req.headers);
 })
 
