@@ -14,7 +14,7 @@ function gatekeeper( req, res ) {
   const pass = req.headers.password;
   
   if ( pass === 'melon' ) {
-    res.status( 200 ).json( { message: 'success' } );
+    next();
   } else {
     res.status( 401 ).json( { message: 'bad password' } );
   }
